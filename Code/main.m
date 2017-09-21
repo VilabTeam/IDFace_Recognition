@@ -2,10 +2,29 @@ close all
 
 %% detection of the chip
 
-test_im = 'candida_bi.jpg';
+test_im = 'ana_costa_BI.jpg';
 im_probe = imread(test_im);
-im_probe = imresize(im_probe, 1);
+im_probe = im2double(imresize(im_probe, 1));
 
+%%face detection
+ faceDetector = vision.CascadeObjectDetector;
+ bboxes = step(faceDetector, im_probe);
+ 
+ if isempty(bboxes) 
+     fprintf("Proceeding to read back of the card");
+ else
+     
+ 
+ [l,c]=size(bboxes);
+ if c>1
+     [B,I]=sort(bboxes(:,3),'descend');
+     bboxes=bboxes(I(1),:);
+ end
+   IFaces = insertObjectAnnotation(im_probe, 'rectangle', bboxes, 'Face');
+   figure, imshow(IFaces), title('Detected faces');
+   
+   %% chip detection
+   
 cform = makecform('srgb2lab');
 lab_he = applycform(im_probe,cform);
 
@@ -65,52 +84,22 @@ mask(mask == 1) = 0.75;
 
 set(h, 'AlphaData', mask);
 
-%% detection of the face
-
-props=regionprops(mask, 'Orientation', 'MajorAxisLength', 'MinorAxisLength');
-if abs(props.Orientation)>80 && abs(props.Orientation)<100
-    if props.Orientation<0
-        degrees=90;
-    else 
-        degrees=-90;
-    end
-    rotated=imrotate(mask, degrees);
-    rotated_or=im2double(imrotate(im_probe, degrees));
-else
-    rotated=mask;
-    rotated_or=im2double(im_probe);
-end
-
-props_rot=regionprops(rotated, 'Centroid');
-
-chip_centroid=[props_rot.Centroid(1),props_rot.Centroid(2)];
+props=regionprops(mask, 'Centroid', 'MinorAxisLength');
+chip_centroid=[props.Centroid(1),props.Centroid(2)];
 
 vert_side=props.MinorAxisLength;
 scaling_fac=vert_side/1.2;
 
- faceDetector = vision.CascadeObjectDetector;
- %ID face
- bboxes = step(faceDetector, rotated_or);
- 
- [l,c]=size(bboxes);
- if c>1
-     [B,I]=sort(bboxes(:,3),'descend');
-     bboxes=bboxes(I(1),:);
- end
-   IFaces = insertObjectAnnotation(im_probe, 'rectangle', bboxes, 'Face');
-   figure, imshow(IFaces), title('Detected faces');
- 
  %% 
  %chip
  rect_3=[chip_centroid(1)-(0.65*scaling_fac), chip_centroid(2)-(0.6*scaling_fac); chip_centroid(1)+(0.65*scaling_fac), chip_centroid(2)-(0.6*scaling_fac);chip_centroid(1)+(0.65*scaling_fac), chip_centroid(2)+(0.6*scaling_fac);chip_centroid(1)-(0.65*scaling_fac), chip_centroid(2)+(0.6*scaling_fac)];
- BW3 = roipoly(rotated_or,rect_3(:,1),rect_3(:,2));
+ BW3 = roipoly(im_probe,rect_3(:,1),rect_3(:,2));
  
  % bboxes=[x y width height]
  %BI face
  rect_4=[bboxes(1), bboxes(2); bboxes(1)+bboxes(3), bboxes(2); bboxes(1)+bboxes(3), bboxes(2)+bboxes(4); bboxes(1), bboxes(2)+bboxes(4)];
- BW4=roipoly(rotated_or,rect_4(:,1),rect_4(:,2));
-rotated_or=rgb2gray(rotated_or);
-app_mask=rotated_or.*(BW3+BW4);
+ BW4=roipoly(im_probe,rect_4(:,1),rect_4(:,2));
+app_mask=im_probe.*(BW3+BW4);
 figure
 imshow(app_mask)
 
@@ -121,10 +110,16 @@ centroid_3=centroid_3.Centroid;
 centroid_4=regionprops(BW4,'Centroid');
 centroid_4=centroid_4.Centroid;
 
+dist_chip_face=ceil(centroid_3-centroid_4);
+
+if -350<dist_chip_face(1)<-250
+    if -40<dist_chip_face(2)<-80
+        
+        
 %card
 rect_5=[centroid_3(1)-(1.55*scaling_fac), centroid_3(2)-(2.4*scaling_fac); centroid_4(1)+(1.2*scaling_fac), centroid_3(2)-(2.4*scaling_fac); centroid_4(1)+(1.2*scaling_fac), centroid_4(2)+(1.6*scaling_fac); centroid_3(1)-(1.55*scaling_fac), centroid_4(2)+(1.6*scaling_fac)];
-BW5=roipoly(rotated_or,rect_5(:,1),rect_5(:,2));
-app_mask_final=rotated_or.*(BW5);
+BW5=roipoly(im_probe,rect_5(:,1),rect_5(:,2));
+app_mask_final=im_probe.*(BW5);
 
 
 %chip
@@ -133,7 +128,7 @@ bboxes1=[rect_3(1,1), rect_3(1,2), pdist([rect_3(1,:); rect_3(2,:)]), pdist([rec
 bboxes2=[rect_5(1,1), rect_5(1,2), pdist([rect_5(1,:); rect_5(2,:)]), pdist([rect_5(1,:); rect_5(4,:)])];
 
 figure
-imshow(rotated_or)
+imshow(im_probe)
 hold on
 %ID face
 rectangle('Position',bboxes,'LineWidth',2,'LineStyle','--')
@@ -163,13 +158,6 @@ bboxes5=[number_box(1,1), number_box(1,2), pdist([number_box(1,:); number_box(2,
 
 rectangle('Position',bboxes5,'LineWidth',2,'LineStyle','--')
 
-
-
-im_final = im2bw(rotated_or,graythresh(rotated_or));
-I_surname=imcrop(im_final,bboxes3);
-txt_surname=ocr(I_surname,'TextLayout', 'Block');
-I_firstname=imcrop(im_final,bboxes4);
-txt_firstname=ocr(I_firstname,'TextLayout', 'Block');
-I_id=imcrop(im_final,bboxes5);
-txt_id=ocr(I_id,'TextLayout', 'Block');
-info=struct('Name',strcat(txt_firstname.Text,' ', txt_surname.Text),'ID',txt_id.Text);
+    end
+end
+ end
