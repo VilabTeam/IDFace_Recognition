@@ -128,36 +128,36 @@ fprintf(1, 'About to call preview...\n');
 preview(vidobj, handleToImage);
 
 
-vidobj2=videoinput('linuxvideo', 1);	% Switch to second device
-% return video output as rgb
-set(vidobj2,'ReturnedColorSpace','rgb');
-% Switch the current graphic axes to handles.axesImage.
-% This is where we want the video to go.
-axes(handles.axes2);
-% Reset image magnification. Required if you ever displayed an image
-% in the axes that was not the same size as your camera image.
-hold off;
-
-% Make the aspect ratio of the axes the same as the aspect ratio of the camera.
-videoRes = get(vidobj2, 'VideoResolution');
-numberOfBands = get(vidobj2, 'NumberOfBands');
-fprintf(1, 'Video resolution = %d wide by %d tall, by %d color channels.\n', videoRes(1), videoRes(2), numberOfBands);
-% framePosition = get(handles.axesImage, 'Position');
-% frameWidth = (framePosition(4) * videoRes(1)) / videoRes(2);
-% framePosition2 = framePosition;
-% framePosition2(3) = frameWidth;
-% set(handles.axesImage, 'Position', framePosition2);
-% drawnow;
-
-% Get the handle to the image in the axes.
-% handleToImage = findobj(handles.axesImage, 'Type', 'image');
-% This is how the MATLAB example code does in. They don't use findobj()
-fprintf(1, 'About to allocate temporary memory...\n');
-handleToImage = image( zeros([videoRes(2), videoRes(1),numberOfBands], 'uint8') );
-fprintf(1, 'About to call preview...\n');
-
-% Turn on the live video.
-preview(vidobj2, handleToImage);
+% % % % % % % vidobj2=videoinput('linuxvideo', 1);	% Switch to second device
+% % % % % % % % return video output as rgb
+% % % % % % % set(vidobj2,'ReturnedColorSpace','rgb');
+% % % % % % % % Switch the current graphic axes to handles.axesImage.
+% % % % % % % % This is where we want the video to go.
+% % % % % % % axes(handles.axes2);
+% % % % % % % % Reset image magnification. Required if you ever displayed an image
+% % % % % % % % in the axes that was not the same size as your camera image.
+% % % % % % % hold off;
+% % % % % % % 
+% % % % % % % % Make the aspect ratio of the axes the same as the aspect ratio of the camera.
+% % % % % % % videoRes = get(vidobj2, 'VideoResolution');
+% % % % % % % numberOfBands = get(vidobj2, 'NumberOfBands');
+% % % % % % % fprintf(1, 'Video resolution = %d wide by %d tall, by %d color channels.\n', videoRes(1), videoRes(2), numberOfBands);
+% % % % % % % % framePosition = get(handles.axesImage, 'Position');
+% % % % % % % % frameWidth = (framePosition(4) * videoRes(1)) / videoRes(2);
+% % % % % % % % framePosition2 = framePosition;
+% % % % % % % % framePosition2(3) = frameWidth;
+% % % % % % % % set(handles.axesImage, 'Position', framePosition2);
+% % % % % % % % drawnow;
+% % % % % % % 
+% % % % % % % % Get the handle to the image in the axes.
+% % % % % % % % handleToImage = findobj(handles.axesImage, 'Type', 'image');
+% % % % % % % % This is how the MATLAB example code does in. They don't use findobj()
+% % % % % % % fprintf(1, 'About to allocate temporary memory...\n');
+% % % % % % % handleToImage = image( zeros([videoRes(2), videoRes(1),numberOfBands], 'uint8') );
+% % % % % % % fprintf(1, 'About to call preview...\n');
+% % % % % % % 
+% % % % % % % % Turn on the live video.
+% % % % % % % preview(vidobj2, handleToImage);
 
 
 

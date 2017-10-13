@@ -168,6 +168,9 @@ else
         %card
         rect_5=[chip_centroid(1)-(1.55*scaling_fac), chip_centroid(2)-(2.4*scaling_fac); face_centroid(1)+(1.2*scaling_fac), chip_centroid(2)-(2.4*scaling_fac); face_centroid(1)+(1.2*scaling_fac), face_centroid(2)+(1.6*scaling_fac); chip_centroid(1)-(1.55*scaling_fac), face_centroid(2)+(1.6*scaling_fac)];
         BW5 = roipoly(im_probe,rect_5(:,1),rect_5(:,2));
+        aux_zeros = zeros(size(BW5)); aux_zeros = aux_zeros + BW5;
+        aux_zeros = aux_zeros + roipoly(im_probe,rect_3(:,1),rect_3(:,2));
+        aux_zeros = aux_zeros + roipoly(im_probe,rect_4(:,1),rect_4(:,2));
         
         
         %chip
@@ -223,26 +226,66 @@ else
         recognizedText = txt_bottom.Text
         recconf = txt_bottom.CharacterConfidences'
         recognizedText(recconf < 0.75) = '*';
-        text(600, 150, recognizedText, 'BackgroundColor', [1 1 1]);
+        text(100, 150, recognizedText, 'BackgroundColor', [1 1 1]);
         
         rectangle('Position',bboxes3,'LineWidth',2,'LineStyle','--')
         
-        
-        firstname_box=[rect_5(1,1)+(2.4*scaling_fac), rect_5(1,2)+(2*scaling_fac);rect_5(2,1),rect_5(2,2)+(2*scaling_fac);rect_5(2,1), rect_5(2,2)-(2.5*scaling_fac);rect_5(1,1)+(2.4*scaling_fac), rect_5(1,2)+(2.5*scaling_fac)];
-        %firstname
+        % replicate for firstname
+        firstname_box=[rect_5(1,1)+(2.3*scaling_fac), rect_5(1,2)+(1.95*scaling_fac);...
+            rect_5(2,1)-(0.5*scaling_fac), rect_5(2,2)+(1.95*scaling_fac); ...
+            rect_5(2,1)-(0.5*scaling_fac), rect_5(2,2)-(2.5*scaling_fac); ...
+            rect_5(1,1)+(2.3*scaling_fac), rect_5(1,2)+(2.5*scaling_fac)];
+
         bboxes4=[firstname_box(1,1), firstname_box(1,2), pdist([firstname_box(1,:); firstname_box(2,:)]), pdist([firstname_box(1,:); firstname_box(4,:)])];
         
         rectangle('Position',bboxes4,'LineWidth',2,'LineStyle','--')
         
-        number_box=[rect_5(1,1)+(2.4*scaling_fac), rect_5(1,2)+(3.5*scaling_fac);...
-            rect_5(2,1)-(4.2*scaling_fac),rect_5(2,2)+(3.5*scaling_fac);...
-            rect_5(2,1)-(4.2*scaling_fac), rect_5(2,2)-(4*scaling_fac);...
-            rect_5(1,1)+(2.4*scaling_fac), rect_5(1,2)+(4*scaling_fac)];
-        %number
-        bboxes5=[number_box(1,1), number_box(1,2), pdist([number_box(1,:); number_box(2,:)]), pdist([number_box(1,:); number_box(4,:)])];
         
-        rectangle('Position',bboxes5,'LineWidth',2,'LineStyle','--')
-        hold off
+        rect_surname = [bboxes4(1),bboxes4(2);...
+            bboxes4(1)+bboxes4(3),bboxes4(2);
+            bboxes4(1)+bboxes4(3),bboxes4(2)+bboxes4(4);
+            bboxes4(1),bboxes4(2)+bboxes4(4)];
+        BW_surname = roipoly(im_probe,...
+            rect_surname(:,1), rect_surname(:,2));
+        
+        
+        surname = im_probe .* BW_surname;
+        
+        %         I_bottom = adapthisteq(rgb2gray(imcrop(surname,bboxes3)));   % needs adjusting because of the visual glitches regarding the color
+        %         I_bottom(1,:) = []; I_bottom(:,1) = [];
+        %         I_bottom(end,:) = []; I_bottom(:,end) = [];
+        %         I_bottom = imadjust(I_bottom);
+        %                 im_final = imbinarize(I_bottom,0.25);
+        %         graythresh(I_bottom)
+        %                 im_final = imclose(im_final, strel('square',2));
+        
+        I_surname = rgb2gray(imcrop(surname,bboxes4));
+        [l,~] = graythresh(I_surname)
+        I_bin = imbinarize(I_surname,l);
+        I_bin(1,:) = [];
+        I_bin(:,1) = [];
+        I_bin(end,:) = [];
+        I_bin(:,end) = [];
+        im_final = medfilt2(I_bin);
+        
+        
+        txt_bottom=ocr(im_final,'TextLayout', 'Line', 'CharacterSet', 'QWERTYUIOPASDFGHJKLZXCVBNM');
+        recognizedText = txt_bottom.Text
+        recconf = txt_bottom.CharacterConfidences'
+        recognizedText(recconf < 0.75) = '*';
+        text(100, 350, recognizedText, 'BackgroundColor', [1 1 1]);
+        
+        rectangle('Position',bboxes4,'LineWidth',2,'LineStyle','--')
+        
+%         number_box=[rect_5(1,1)+(2.4*scaling_fac), rect_5(1,2)+(3.5*scaling_fac);...
+%             rect_5(2,1)-(4.2*scaling_fac),rect_5(2,2)+(3.5*scaling_fac);...
+%             rect_5(2,1)-(4.2*scaling_fac), rect_5(2,2)-(4*scaling_fac);...
+%             rect_5(1,1)+(2.4*scaling_fac), rect_5(1,2)+(4*scaling_fac)];
+%         %number
+%         bboxes5=[number_box(1,1), number_box(1,2), pdist([number_box(1,:); number_box(2,:)]), pdist([number_box(1,:); number_box(4,:)])];
+%         
+%         rectangle('Position',bboxes5,'LineWidth',2,'LineStyle','--')
+%         hold off
     else
         fprintf('No ID card detected');
         %         text_rec=back_read(im_probe);
