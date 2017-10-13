@@ -35,7 +35,7 @@ for ii =1:nColors
     blocks = bwlabel(cluster(:,:,1));
     
     for blockdata = 1:max(blocks(:))
-        
+        figure, imagesc(blocks==blockdata)
         data = regionprops((blocks==blockdata),'Area','ConvexArea','Centroid','Eccentricity');
         if data.Area > 1000
             decision(ii,blockdata) = data.ConvexArea/data.Area * data.Eccentricity;
