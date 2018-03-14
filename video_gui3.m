@@ -42,7 +42,7 @@ if nargout
 else
     gui_mainfcn(gui_State, varargin{:});
 end
-% End initialization code - DO NOT EDIT
+% End initialization code 3- DO NOT EDIT
 
 
 % --- Executes just before video_gui3 is made visible.
@@ -88,7 +88,7 @@ varargout{1} = handles.output;
     
 function TurnOnLiveVideo(handles)
 global vidobj;
-vidobj=videoinput('linuxvideo', 1);	% Video camera object.
+vidobj=videoinput('winvideo', 1);	% Video camera object.
 try
 % Bail out if there is no video object class instantiated.
 if isempty(vidobj)
